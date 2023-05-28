@@ -20,6 +20,11 @@ pub enum TokenType {
   RBRACE,
   FUNCTION,
   VAR,
+  TRUE,
+  FALSE,
+  IF,
+  ELSE,
+  RET,
 }
 
 impl TokenType {
@@ -27,6 +32,11 @@ impl TokenType {
     match ident {
       "def" => Self::FUNCTION,
       "var" => Self::VAR,
+      "true" => Self::TRUE,
+      "false" => Self::FALSE,
+      "if" => Self::IF,
+      "else" => Self::ELSE,
+      "ret" => Self::RET,
       _ => Self::IDENT,
     }
   }
