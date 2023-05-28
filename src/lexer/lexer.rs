@@ -39,6 +39,12 @@ impl Lexer {
       ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
       ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
       '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
+      '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
+      '!' => Token::new(TokenType::BANG, self.ch.to_string()),
+      '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
+      '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
+      '<' => Token::new(TokenType::LT, self.ch.to_string()),
+      '>' => Token::new(TokenType::GT, self.ch.to_string()),
       '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
       '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
       '\0' => Token::new(TokenType::EOF, "".to_string()),
@@ -135,6 +141,8 @@ mod tests {
           x + y;
         };
         var result = add(five, ten);
+        !-/*5;
+        5 < 10 > 5;
         "
     .to_owned();
 
@@ -174,6 +182,18 @@ mod tests {
       TokenType::COMMA,
       TokenType::IDENT,
       TokenType::RPAREN,
+      TokenType::SEMICOLON,
+      TokenType::BANG,
+      TokenType::MINUS,
+      TokenType::SLASH,
+      TokenType::ASTERISK,
+      TokenType::INT,
+      TokenType::SEMICOLON,
+      TokenType::INT,
+      TokenType::LT,
+      TokenType::INT,
+      TokenType::GT,
+      TokenType::INT,
       TokenType::SEMICOLON,
       TokenType::EOF,
     ];
