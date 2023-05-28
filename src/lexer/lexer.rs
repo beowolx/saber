@@ -1,10 +1,21 @@
 use crate::token::{Token, TokenType};
 
+/// The `Lexer` struct is responsible for the lexical analysis of the source code. It breaks down the source code into a sequence of tokens.
+///
+/// # Fields
+///
+/// * `input` - The source code to be tokenized.
+///
+/// * `position` - The current position in the `input` (points to the current character).
+///
+/// * `read_position` - The current reading position in the `input` (points to the character after the current character).
+///
+/// * `ch` - The current character under examination.
 pub struct Lexer {
   input: String,
-  position: usize, // current position in input (points to current char)
-  read_position: usize, // current reading position in input (after current char)
-  ch: char,             // current char under examination
+  position: usize,
+  read_position: usize,
+  ch: char,
 }
 
 impl Lexer {
