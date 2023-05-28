@@ -140,9 +140,17 @@ mod tests {
         var add = def(x, y) {
           x + y;
         };
+
         var result = add(five, ten);
+
         !-/*5;
         5 < 10 > 5;
+
+        if (5 < 10) {
+          ret true;
+        } else {
+          ret false;
+        }
         "
     .to_owned();
 
@@ -195,6 +203,23 @@ mod tests {
       TokenType::GT,
       TokenType::INT,
       TokenType::SEMICOLON,
+      TokenType::IF,
+      TokenType::LPAREN,
+      TokenType::INT,
+      TokenType::LT,
+      TokenType::INT,
+      TokenType::RPAREN,
+      TokenType::LBRACE,
+      TokenType::RET,
+      TokenType::TRUE,
+      TokenType::SEMICOLON,
+      TokenType::RBRACE,
+      TokenType::ELSE,
+      TokenType::LBRACE,
+      TokenType::RET,
+      TokenType::FALSE,
+      TokenType::SEMICOLON,
+      TokenType::RBRACE,
       TokenType::EOF,
     ];
 
