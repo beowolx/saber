@@ -1,18 +1,3 @@
-pub const ILLEGAL: &'static str = "ILLEGAL";
-pub const EOF: &'static str = "EOF";
-pub const IDENT: &'static str = "IDENT";
-pub const INT: &'static str = "INT";
-pub const ASSIGN: &'static str = "=";
-pub const PLUS: &'static str = "+";
-pub const COMMA: &'static str = ",";
-pub const SEMICOLON: &'static str = ";";
-pub const LPAREN: &'static str = "(";
-pub const RPAREN: &'static str = ")";
-pub const LBRACE: &'static str = "{";
-pub const RBRACE: &'static str = "}";
-pub const FUNCTION: &'static str = "FUNCTION";
-pub const LET: &'static str = "LET";
-
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
   ILLEGAL,
@@ -28,7 +13,17 @@ pub enum TokenType {
   LBRACE,
   RBRACE,
   FUNCTION,
-  LET,
+  VAR,
+}
+
+impl TokenType {
+  pub fn lookup_ident(ident: &str) -> Self {
+    match ident {
+      "def" => Self::FUNCTION,
+      "var" => Self::VAR,
+      _ => Self::IDENT,
+    }
+  }
 }
 
 #[derive(PartialEq, Debug)]
