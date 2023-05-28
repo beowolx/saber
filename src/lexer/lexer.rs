@@ -1,4 +1,7 @@
-use crate::token::{Token, TokenType};
+use crate::token::{
+  Token, TokenType, ASSIGN, ASTERISK, BANG, COMMA, EOF, EQ, GT, LBRACE, LPAREN,
+  LT, MINUS, NOT_EQ, PLUS, RBRACE, RPAREN, SEMICOLON, SLASH,
+};
 
 /// The `Lexer` struct is responsible for the lexical analysis of the source code. It breaks down the source code into a sequence of tokens.
 ///
@@ -33,35 +36,35 @@ impl Lexer {
   pub fn next_token(&mut self) -> Token {
     self.skip_whitespace();
     let tok = match self.ch {
-      '=' => {
-        if self.peek_char() == '=' {
+      ASSIGN => {
+        if self.peek_char() == ASSIGN {
           self.read_char();
-          Token::new(TokenType::Eq, "==".to_string())
+          Token::new(TokenType::Eq, EQ.to_owned())
         } else {
-          Token::new(TokenType::Assign, self.ch.to_string())
+          Token::new(TokenType::Assign, ASSIGN.to_string())
         }
       }
-      ';' => Token::new(TokenType::Semicolon, self.ch.to_string()),
-      '(' => Token::new(TokenType::Lparen, self.ch.to_string()),
-      ')' => Token::new(TokenType::Rparen, self.ch.to_string()),
-      ',' => Token::new(TokenType::Comma, self.ch.to_string()),
-      '+' => Token::new(TokenType::Plus, self.ch.to_string()),
-      '-' => Token::new(TokenType::Minus, self.ch.to_string()),
-      '!' => {
-        if self.peek_char() == '=' {
+      SEMICOLON => Token::new(TokenType::Semicolon, SEMICOLON.to_string()),
+      LPAREN => Token::new(TokenType::Lparen, LPAREN.to_string()),
+      RPAREN => Token::new(TokenType::Rparen, RPAREN.to_string()),
+      COMMA => Token::new(TokenType::Comma, COMMA.to_string()),
+      PLUS => Token::new(TokenType::Plus, PLUS.to_string()),
+      MINUS => Token::new(TokenType::Minus, MINUS.to_string()),
+      BANG => {
+        if self.peek_char() == ASSIGN {
           self.read_char();
-          Token::new(TokenType::NotEq, "!=".to_string())
+          Token::new(TokenType::NotEq, NOT_EQ.to_owned())
         } else {
-          Token::new(TokenType::Bang, self.ch.to_string())
+          Token::new(TokenType::Bang, BANG.to_string())
         }
       }
-      '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
-      '/' => Token::new(TokenType::Slash, self.ch.to_string()),
-      '<' => Token::new(TokenType::Lt, self.ch.to_string()),
-      '>' => Token::new(TokenType::Gt, self.ch.to_string()),
-      '{' => Token::new(TokenType::Lbrace, self.ch.to_string()),
-      '}' => Token::new(TokenType::Rbrace, self.ch.to_string()),
-      '\0' => Token::new(TokenType::Eof, "".to_string()),
+      ASTERISK => Token::new(TokenType::Asterisk, ASTERISK.to_string()),
+      SLASH => Token::new(TokenType::Slash, SLASH.to_string()),
+      LT => Token::new(TokenType::Lt, LT.to_string()),
+      GT => Token::new(TokenType::Gt, GT.to_string()),
+      LBRACE => Token::new(TokenType::Lbrace, LBRACE.to_string()),
+      RBRACE => Token::new(TokenType::Rbrace, RBRACE.to_string()),
+      EOF => Token::new(TokenType::Eof, EOF.to_string()),
       _ => {
         if self.is_letter() {
           let literal = self.read_identifier();
@@ -81,7 +84,7 @@ impl Lexer {
 
   fn read_char(&mut self) {
     if self.read_position >= self.input.len() {
-      self.ch = '\0';
+      self.ch = EOF;
     } else {
       self.ch = self
         .input
@@ -121,7 +124,7 @@ impl Lexer {
 
   fn peek_char(&self) -> char {
     if self.read_position >= self.input.len() {
-      '\0'
+      EOF
     } else {
       self
         .input

@@ -1,3 +1,29 @@
+pub const DEF: &str = "def";
+pub const VAR: &str = "var";
+pub const TRUE: &str = "true";
+pub const FALSE: &str = "false";
+pub const IF: &str = "if";
+pub const ELSE: &str = "else";
+pub const RET: &str = "ret";
+
+pub const EQ: &str = "==";
+pub const NOT_EQ: &str = "!=";
+pub const ASSIGN: char = '=';
+pub const SEMICOLON: char = ';';
+pub const LPAREN: char = '(';
+pub const RPAREN: char = ')';
+pub const LBRACE: char = '{';
+pub const RBRACE: char = '}';
+pub const COMMA: char = ',';
+pub const PLUS: char = '+';
+pub const MINUS: char = '-';
+pub const BANG: char = '!';
+pub const ASTERISK: char = '*';
+pub const SLASH: char = '/';
+pub const LT: char = '<';
+pub const GT: char = '>';
+pub const EOF: char = '\0';
+
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
   Illegal,
@@ -32,13 +58,13 @@ pub enum TokenType {
 impl TokenType {
   pub fn lookup_ident(ident: &str) -> Self {
     match ident {
-      "def" => Self::Function,
-      "var" => Self::Var,
-      "true" => Self::True,
-      "false" => Self::False,
-      "if" => Self::If,
-      "else" => Self::Else,
-      "ret" => Self::Ret,
+      DEF => Self::Function,
+      VAR => Self::Var,
+      TRUE => Self::True,
+      FALSE => Self::False,
+      IF => Self::If,
+      ELSE => Self::Else,
+      RET => Self::Ret,
       _ => Self::Ident,
     }
   }
