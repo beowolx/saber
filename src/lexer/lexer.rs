@@ -33,21 +33,35 @@ impl Lexer {
   pub fn next_token(&mut self) -> Token {
     self.skip_whitespace();
     let tok = match self.ch {
-      '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
-      ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
-      '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
-      ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
-      ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
-      '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
-      '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
-      '!' => Token::new(TokenType::BANG, self.ch.to_string()),
-      '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
-      '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
-      '<' => Token::new(TokenType::LT, self.ch.to_string()),
-      '>' => Token::new(TokenType::GT, self.ch.to_string()),
-      '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
-      '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
-      '\0' => Token::new(TokenType::EOF, "".to_string()),
+      '=' => {
+        if self.peek_char() == '=' {
+          self.read_char();
+          Token::new(TokenType::Eq, "==".to_string())
+        } else {
+          Token::new(TokenType::Assign, self.ch.to_string())
+        }
+      }
+      ';' => Token::new(TokenType::Semicolon, self.ch.to_string()),
+      '(' => Token::new(TokenType::Lparen, self.ch.to_string()),
+      ')' => Token::new(TokenType::Rparen, self.ch.to_string()),
+      ',' => Token::new(TokenType::Comma, self.ch.to_string()),
+      '+' => Token::new(TokenType::Plus, self.ch.to_string()),
+      '-' => Token::new(TokenType::Minus, self.ch.to_string()),
+      '!' => {
+        if self.peek_char() == '=' {
+          self.read_char();
+          Token::new(TokenType::NotEq, "!=".to_string())
+        } else {
+          Token::new(TokenType::Bang, self.ch.to_string())
+        }
+      }
+      '*' => Token::new(TokenType::Asterisk, self.ch.to_string()),
+      '/' => Token::new(TokenType::Slash, self.ch.to_string()),
+      '<' => Token::new(TokenType::Lt, self.ch.to_string()),
+      '>' => Token::new(TokenType::Gt, self.ch.to_string()),
+      '{' => Token::new(TokenType::Lbrace, self.ch.to_string()),
+      '}' => Token::new(TokenType::Rbrace, self.ch.to_string()),
+      '\0' => Token::new(TokenType::Eof, "".to_string()),
       _ => {
         if self.is_letter() {
           let literal = self.read_identifier();
@@ -55,9 +69,9 @@ impl Lexer {
           return Token::new(token_type, literal);
         } else if self.ch.is_ascii_digit() {
           let literal = self.read_number();
-          return Token::new(TokenType::INT, literal);
+          return Token::new(TokenType::Int, literal);
         } else {
-          Token::new(TokenType::ILLEGAL, self.ch.to_string())
+          Token::new(TokenType::Illegal, self.ch.to_string())
         }
       }
     };
@@ -104,6 +118,18 @@ impl Lexer {
       self.read_char();
     }
   }
+
+  fn peek_char(&self) -> char {
+    if self.read_position >= self.input.len() {
+      '\0'
+    } else {
+      self
+        .input
+        .chars()
+        .nth(self.read_position)
+        .expect("Peeking char failed")
+    }
+  }
 }
 
 #[cfg(test)]
@@ -115,15 +141,15 @@ mod tests {
   fn test_next_token() {
     let input = "=+(){},;".to_owned();
     let tests = vec![
-      TokenType::ASSIGN,
-      TokenType::PLUS,
-      TokenType::LPAREN,
-      TokenType::RPAREN,
-      TokenType::LBRACE,
-      TokenType::RBRACE,
-      TokenType::COMMA,
-      TokenType::SEMICOLON,
-      TokenType::EOF,
+      TokenType::Assign,
+      TokenType::Plus,
+      TokenType::Lparen,
+      TokenType::Rparen,
+      TokenType::Lbrace,
+      TokenType::Rbrace,
+      TokenType::Comma,
+      TokenType::Semicolon,
+      TokenType::Eof,
     ];
     let mut l = Lexer::new(input);
     for t in tests {
@@ -151,76 +177,87 @@ mod tests {
         } else {
           ret false;
         }
+
+        10 == 10;
+        10 != 9;
         "
     .to_owned();
 
     let tests = vec![
-      TokenType::VAR,
-      TokenType::IDENT,
-      TokenType::ASSIGN,
-      TokenType::INT,
-      TokenType::SEMICOLON,
-      TokenType::VAR,
-      TokenType::IDENT,
-      TokenType::ASSIGN,
-      TokenType::INT,
-      TokenType::SEMICOLON,
-      TokenType::VAR,
-      TokenType::IDENT,
-      TokenType::ASSIGN,
-      TokenType::FUNCTION,
-      TokenType::LPAREN,
-      TokenType::IDENT,
-      TokenType::COMMA,
-      TokenType::IDENT,
-      TokenType::RPAREN,
-      TokenType::LBRACE,
-      TokenType::IDENT,
-      TokenType::PLUS,
-      TokenType::IDENT,
-      TokenType::SEMICOLON,
-      TokenType::RBRACE,
-      TokenType::SEMICOLON,
-      TokenType::VAR,
-      TokenType::IDENT,
-      TokenType::ASSIGN,
-      TokenType::IDENT,
-      TokenType::LPAREN,
-      TokenType::IDENT,
-      TokenType::COMMA,
-      TokenType::IDENT,
-      TokenType::RPAREN,
-      TokenType::SEMICOLON,
-      TokenType::BANG,
-      TokenType::MINUS,
-      TokenType::SLASH,
-      TokenType::ASTERISK,
-      TokenType::INT,
-      TokenType::SEMICOLON,
-      TokenType::INT,
-      TokenType::LT,
-      TokenType::INT,
-      TokenType::GT,
-      TokenType::INT,
-      TokenType::SEMICOLON,
-      TokenType::IF,
-      TokenType::LPAREN,
-      TokenType::INT,
-      TokenType::LT,
-      TokenType::INT,
-      TokenType::RPAREN,
-      TokenType::LBRACE,
-      TokenType::RET,
-      TokenType::TRUE,
-      TokenType::SEMICOLON,
-      TokenType::RBRACE,
-      TokenType::ELSE,
-      TokenType::LBRACE,
-      TokenType::RET,
-      TokenType::FALSE,
-      TokenType::SEMICOLON,
-      TokenType::RBRACE,
-      TokenType::EOF,
+      TokenType::Var,
+      TokenType::Ident,
+      TokenType::Assign,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::Var,
+      TokenType::Ident,
+      TokenType::Assign,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::Var,
+      TokenType::Ident,
+      TokenType::Assign,
+      TokenType::Function,
+      TokenType::Lparen,
+      TokenType::Ident,
+      TokenType::Comma,
+      TokenType::Ident,
+      TokenType::Rparen,
+      TokenType::Lbrace,
+      TokenType::Ident,
+      TokenType::Plus,
+      TokenType::Ident,
+      TokenType::Semicolon,
+      TokenType::Rbrace,
+      TokenType::Semicolon,
+      TokenType::Var,
+      TokenType::Ident,
+      TokenType::Assign,
+      TokenType::Ident,
+      TokenType::Lparen,
+      TokenType::Ident,
+      TokenType::Comma,
+      TokenType::Ident,
+      TokenType::Rparen,
+      TokenType::Semicolon,
+      TokenType::Bang,
+      TokenType::Minus,
+      TokenType::Slash,
+      TokenType::Asterisk,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::Int,
+      TokenType::Lt,
+      TokenType::Int,
+      TokenType::Gt,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::If,
+      TokenType::Lparen,
+      TokenType::Int,
+      TokenType::Lt,
+      TokenType::Int,
+      TokenType::Rparen,
+      TokenType::Lbrace,
+      TokenType::Ret,
+      TokenType::True,
+      TokenType::Semicolon,
+      TokenType::Rbrace,
+      TokenType::Else,
+      TokenType::Lbrace,
+      TokenType::Ret,
+      TokenType::False,
+      TokenType::Semicolon,
+      TokenType::Rbrace,
+      TokenType::Int,
+      TokenType::Eq,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::Int,
+      TokenType::NotEq,
+      TokenType::Int,
+      TokenType::Semicolon,
+      TokenType::Eof,
     ];
 
     let mut l = Lexer::new(input);
