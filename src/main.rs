@@ -1,4 +1,5 @@
 use std::env;
+mod ast;
 mod lexer;
 mod repl;
 mod token;
