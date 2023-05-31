@@ -24,7 +24,7 @@ pub const LT: char = '<';
 pub const GT: char = '>';
 pub const EOF: char = '\0';
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
   Illegal,
   Eof,
@@ -70,7 +70,7 @@ impl TokenType {
   }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Token {
   pub token_type: TokenType,
   pub literal: String,
