@@ -1,5 +1,5 @@
 use crate::{
-  ast::{Identifier, Program, Statement, VarStatement},
+  ast::{Identifier, Program, RetStatement, Statement, VarStatement},
   lexer::Lexer,
   token::Token,
   token::TokenType,
@@ -43,6 +43,7 @@ impl Parser {
   pub fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
     match self.current_token.token_type {
       TokenType::Var => self.parse_var_statement(),
+      TokenType::Ret => self.parse_ret_statement(),
       _ => None,
     }
   }
@@ -72,6 +73,22 @@ impl Parser {
       token,
       name,
       value: None,
+    }))
+  }
+
+  pub fn parse_ret_statement(&mut self) -> Option<Box<dyn Statement>> {
+    let token = self.current_token.clone();
+
+    self.next_token();
+
+    // TODO: Skip the expression until we find a semicolon
+    while !self.current_token_is(TokenType::Semicolon) {
+      self.next_token();
+    }
+
+    Some(Box::new(RetStatement {
+      token,
+      return_value: None,
     }))
   }
 
@@ -126,25 +143,28 @@ mod tests {
 
     assert_eq!(program.statements.len(), 3);
 
-    let tests = vec!["x", "y", "foobar"];
-
-    for (i, tt) in tests.iter().enumerate() {
-      let stmt = &program.statements[i];
+    for stmt in program.statements {
       assert_eq!(stmt.token_literal(), "var");
-      // assert_eq!(
-      //   stmt,
-      //   &Statement::Var(VarStatement {
-      //     token: Token::new(TokenType::Var, "let".to_string()),
-      //     name: Identifier {
-      //       token: Token::new(TokenType::Ident, tt.to_string()),
-      //       value: tt.to_string(),
-      //     },
-      //     value: Expression::IntegerLiteral(IntegerLiteral {
-      //       token: Token::new(TokenType::Int, "5".to_string()),
-      //       value: 5,
-      //     }),
-      //   })
-      // );
+    }
+  }
+
+  #[test]
+  fn test_ret_statements() {
+    let input = "
+        ret 5;
+        ret 10;
+        ret 993322;
+        ";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 3);
+
+    for stmt in program.statements {
+      assert_eq!(stmt.token_literal(), "ret");
     }
   }
 
