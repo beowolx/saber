@@ -9,6 +9,7 @@ struct Parser {
   lexer: Lexer,
   current_token: Token,
   peek_token: Token,
+  errors: Vec<String>,
 }
 
 impl Parser {
@@ -19,6 +20,7 @@ impl Parser {
       lexer: l,
       current_token,
       peek_token,
+      errors: vec![],
     }
   }
 
@@ -82,12 +84,25 @@ impl Parser {
   }
 
   pub fn expect_peek(&mut self, token_type: TokenType) -> bool {
-    if self.peek_token_is(token_type) {
+    if self.peek_token_is(token_type.clone()) {
       self.next_token();
       true
     } else {
+      self.peek_error(token_type);
       false
     }
+  }
+
+  pub fn errors(&self) -> Vec<String> {
+    self.errors.clone()
+  }
+
+  pub fn peek_error(&mut self, token_type: TokenType) {
+    let msg = format!(
+      "expected next token to be {:?}, got {:?} instead",
+      token_type, self.peek_token.token_type
+    );
+    self.errors.push(msg);
   }
 }
 
@@ -130,6 +145,34 @@ mod tests {
       //     }),
       //   })
       // );
+    }
+  }
+
+  #[test]
+  fn test_parser_errors() {
+    let input = "
+        var x 5;
+        var = 10;
+        var 838383;
+        ";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+
+    p.parse_program().unwrap();
+
+    assert_eq!(p.errors.len(), 3);
+
+    dbg!(&p.errors);
+
+    let errors = vec![
+      "expected next token to be Assign, got Int instead",
+      "expected next token to be Ident, got Assign instead",
+      "expected next token to be Ident, got Int instead",
+    ];
+
+    for (i, err) in errors.iter().enumerate() {
+      assert_eq!(p.errors[i], err.to_string());
     }
   }
 }
