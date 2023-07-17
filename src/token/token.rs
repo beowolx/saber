@@ -24,7 +24,7 @@ pub const LT: char = '<';
 pub const GT: char = '>';
 pub const EOF: char = '\0';
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum TokenType {
   Illegal,
   Eof,
