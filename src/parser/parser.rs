@@ -1,26 +1,40 @@
+use std::{collections::HashMap, rc::Rc};
+
 use crate::{
-  ast::{Identifier, Program, RetStatement, Statement, VarStatement},
+  ast::{
+    Expression, Identifier, Program, RetStatement, Statement, VarStatement,
+  },
   lexer::Lexer,
   token::Token,
   token::TokenType,
 };
+
+type PrefixParseFn = Rc<dyn Fn() -> dyn Expression>;
+type InfixParseFn = Rc<dyn Fn(dyn Expression) -> dyn Expression>;
 
 struct Parser {
   lexer: Lexer,
   current_token: Token,
   peek_token: Token,
   errors: Vec<String>,
+  prefix_parse_fns: HashMap<TokenType, PrefixParseFn>,
+  infix_parse_fns: HashMap<TokenType, InfixParseFn>,
 }
 
 impl Parser {
   pub fn new(mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
+    let prefix_parse_fns = HashMap::new();
+    let infix_parse_fns = HashMap::new();
+
     Self {
       lexer: l,
       current_token,
       peek_token,
       errors: vec![],
+      prefix_parse_fns,
+      infix_parse_fns,
     }
   }
 
@@ -120,6 +134,18 @@ impl Parser {
       token_type, self.peek_token.token_type
     );
     self.errors.push(msg);
+  }
+
+  pub fn register_prefix(
+    &mut self,
+    token_type: TokenType,
+    func: PrefixParseFn,
+  ) {
+    self.prefix_parse_fns.insert(token_type, func);
+  }
+
+  pub fn register_infix(&mut self, token_type: TokenType, func: InfixParseFn) {
+    self.infix_parse_fns.insert(token_type, func);
   }
 }
 
