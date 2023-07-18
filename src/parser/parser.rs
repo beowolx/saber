@@ -2,15 +2,27 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
   ast::{
-    Expression, Identifier, Program, RetStatement, Statement, VarStatement,
+    Expression, ExpressionStatement, Identifier, Program, RetStatement,
+    Statement, VarStatement,
   },
   lexer::Lexer,
   token::Token,
   token::TokenType,
 };
 
-type PrefixParseFn = Rc<dyn Fn() -> dyn Expression>;
-type InfixParseFn = Rc<dyn Fn(dyn Expression) -> dyn Expression>;
+type PrefixParseFn = fn(&Parser) -> Option<Box<dyn Expression>>;
+type InfixParseFn =
+  fn(&mut Parser, Box<dyn Expression>) -> Option<Box<dyn Expression>>;
+
+enum Precedence {
+  Lowest,
+  Equals,
+  LessGreater,
+  Sum,
+  Product,
+  Prefix,
+  Call,
+}
 
 struct Parser {
   lexer: Lexer,
@@ -22,10 +34,14 @@ struct Parser {
 }
 
 impl Parser {
-  pub fn new(mut l: Lexer) -> Self {
+  pub fn new(&self, mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
-    let prefix_parse_fns = HashMap::new();
+    let mut prefix_parse_fns = HashMap::new();
+    let register_prefix = |token_type: TokenType| {
+      prefix_parse_fns.insert(token_type, self.parse_identifier());
+    };
+
     let infix_parse_fns = HashMap::new();
 
     Self {
@@ -58,8 +74,15 @@ impl Parser {
     match self.current_token.token_type {
       TokenType::Var => self.parse_var_statement(),
       TokenType::Ret => self.parse_ret_statement(),
-      _ => None,
+      _ => self.parse_expression_statement(),
     }
+  }
+
+  pub fn parse_identifier(&mut self) -> Option<Box<dyn Expression>> {
+    Some(Box::new(Identifier {
+      token: self.current_token.clone(),
+      value: self.current_token.literal.clone(),
+    }))
   }
 
   pub fn parse_var_statement(&mut self) -> Option<Box<dyn Statement>> {
@@ -104,6 +127,32 @@ impl Parser {
       token,
       return_value: None,
     }))
+  }
+
+  pub fn parse_expression_statement(&mut self) -> Option<Box<dyn Statement>> {
+    let token = self.current_token.clone();
+    let expression = self.parse_expression(Precedence::Lowest);
+
+    if self.peek_token_is(TokenType::Semicolon) {
+      self.next_token();
+    }
+
+    Some(Box::new(ExpressionStatement { token, expression }))
+  }
+
+  pub fn parse_expression(
+    &self,
+    _precedence: Precedence,
+  ) -> Option<Box<dyn Expression>> {
+    let prefix = self.prefix_parse_fns.get(&self.current_token.token_type);
+
+    if prefix.is_none() {
+      return None;
+    }
+
+    let left_exp = prefix.unwrap()(self).unwrap();
+
+    Some(left_exp)
   }
 
   pub fn current_token_is(&self, token_type: TokenType) -> bool {
@@ -220,5 +269,19 @@ mod tests {
     for (i, err) in errors.iter().enumerate() {
       assert_eq!(p.errors[i], err.to_string());
     }
+  }
+
+  #[test]
+  fn test_identifier_expression() {
+    let input = "foobar;";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+    assert_eq!(stmt.token_literal(), "foobar");
   }
 }
