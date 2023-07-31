@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::{
   ast::{
@@ -34,14 +34,10 @@ struct Parser {
 }
 
 impl Parser {
-  pub fn new(&self, mut l: Lexer) -> Self {
+  pub fn new(mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
-    let mut prefix_parse_fns = HashMap::new();
-    let register_prefix = |token_type: TokenType| {
-      prefix_parse_fns.insert(token_type, self.parse_identifier());
-    };
-
+    let prefix_parse_fns = HashMap::new();
     let infix_parse_fns = HashMap::new();
 
     Self {
