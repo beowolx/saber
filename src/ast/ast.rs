@@ -165,6 +165,36 @@ impl Node for IntegerLiteral {
   }
 }
 
+pub struct PrefixExpression {
+  pub token: Token,
+  pub operator: String,
+  pub right: Option<Box<dyn Expression>>,
+}
+
+impl Expression for PrefixExpression {
+  fn expression_node(&self) {}
+}
+
+impl Node for PrefixExpression {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    out.push('(');
+    out.push_str(&self.operator);
+
+    if let Some(right) = &self.right {
+      out.push_str(&right.string());
+    }
+
+    out.push(')');
+
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
