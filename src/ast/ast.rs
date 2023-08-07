@@ -147,6 +147,24 @@ impl Node for ExpressionStatement {
   }
 }
 
+pub struct IntegerLiteral {
+  pub token: Token,
+  pub value: i64,
+}
+
+impl Expression for IntegerLiteral {
+  fn expression_node(&self) {}
+}
+
+impl Node for IntegerLiteral {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+  fn string(&self) -> String {
+    self.token.literal.clone()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

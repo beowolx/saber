@@ -2,17 +2,19 @@ use std::collections::HashMap;
 
 use crate::{
   ast::{
-    Expression, ExpressionStatement, Identifier, Program, RetStatement,
-    Statement, VarStatement,
+    Expression, ExpressionStatement, Identifier, IntegerLiteral, Program,
+    RetStatement, Statement, VarStatement,
   },
   lexer::Lexer,
   token::Token,
   token::TokenType,
 };
 
+// type PrefixParseFn = fn(&Parser) -> Option<Box<dyn Expression>>;
+// type InfixParseFn =
+//   fn(&mut Parser, Box<dyn Expression>) -> Option<Box<dyn Expression>>;
 type PrefixParseFn = fn(&Parser) -> Option<Box<dyn Expression>>;
-type InfixParseFn =
-  fn(&mut Parser, Box<dyn Expression>) -> Option<Box<dyn Expression>>;
+type InfixParseFn = Box<dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>>;
 
 enum Precedence {
   Lowest,
@@ -37,7 +39,10 @@ impl Parser {
   pub fn new(mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
-    let prefix_parse_fns = HashMap::new();
+    let mut prefix_parse_fns: HashMap<TokenType, PrefixParseFn> =
+      HashMap::new();
+    prefix_parse_fns.insert(TokenType::Ident, Self::parse_identifier);
+    prefix_parse_fns.insert(TokenType::Int, Self::parse_integer_literal);
     let infix_parse_fns = HashMap::new();
 
     Self {
@@ -74,11 +79,21 @@ impl Parser {
     }
   }
 
-  pub fn parse_identifier(&mut self) -> Option<Box<dyn Expression>> {
+  pub fn parse_identifier(&self) -> Option<Box<dyn Expression>> {
     Some(Box::new(Identifier {
       token: self.current_token.clone(),
       value: self.current_token.literal.clone(),
     }))
+  }
+
+  pub fn parse_integer_literal(&self) -> Option<Box<dyn Expression>> {
+    match self.current_token.literal.parse::<i64>() {
+      Ok(value) => Some(Box::new(IntegerLiteral {
+        token: self.current_token.clone(),
+        value,
+      })),
+      Err(_) => None,
+    }
   }
 
   pub fn parse_var_statement(&mut self) -> Option<Box<dyn Statement>> {
@@ -181,11 +196,7 @@ impl Parser {
     self.errors.push(msg);
   }
 
-  pub fn register_prefix(
-    &mut self,
-    token_type: TokenType,
-    func: PrefixParseFn,
-  ) {
+  fn register_prefix(&mut self, token_type: TokenType, func: PrefixParseFn) {
     self.prefix_parse_fns.insert(token_type, func);
   }
 
@@ -278,6 +289,23 @@ mod tests {
     assert_eq!(program.statements.len(), 1);
 
     let stmt = program.statements[0].as_ref();
+
     assert_eq!(stmt.token_literal(), "foobar");
+    assert_eq!(stmt.string(), "foobar");
+  }
+
+  #[test]
+  fn test_intenger_literal_expression() {
+    let input = "5;";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+    assert_eq!(stmt.token_literal(), "5");
+    assert_eq!(stmt.string(), "5");
   }
 }
