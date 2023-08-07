@@ -2,18 +2,15 @@ use std::collections::HashMap;
 
 use crate::{
   ast::{
-    Expression, ExpressionStatement, Identifier, IntegerLiteral, Program,
-    RetStatement, Statement, VarStatement,
+    Expression, ExpressionStatement, Identifier, IntegerLiteral,
+    PrefixExpression, Program, RetStatement, Statement, VarStatement,
   },
   lexer::Lexer,
   token::Token,
   token::TokenType,
 };
 
-// type PrefixParseFn = fn(&Parser) -> Option<Box<dyn Expression>>;
-// type InfixParseFn =
-//   fn(&mut Parser, Box<dyn Expression>) -> Option<Box<dyn Expression>>;
-type PrefixParseFn = fn(&Parser) -> Option<Box<dyn Expression>>;
+type PrefixParseFn = fn(&mut Parser) -> Option<Box<dyn Expression>>;
 type InfixParseFn = Box<dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>>;
 
 enum Precedence {
@@ -43,6 +40,8 @@ impl Parser {
       HashMap::new();
     prefix_parse_fns.insert(TokenType::Ident, Self::parse_identifier);
     prefix_parse_fns.insert(TokenType::Int, Self::parse_integer_literal);
+    prefix_parse_fns.insert(TokenType::Bang, Self::parse_prefix_expression);
+    prefix_parse_fns.insert(TokenType::Minus, Self::parse_prefix_expression);
     let infix_parse_fns = HashMap::new();
 
     Self {
@@ -79,20 +78,37 @@ impl Parser {
     }
   }
 
-  pub fn parse_identifier(&self) -> Option<Box<dyn Expression>> {
+  pub fn parse_identifier(&mut self) -> Option<Box<dyn Expression>> {
     Some(Box::new(Identifier {
       token: self.current_token.clone(),
       value: self.current_token.literal.clone(),
     }))
   }
 
-  pub fn parse_integer_literal(&self) -> Option<Box<dyn Expression>> {
+  pub fn parse_integer_literal(&mut self) -> Option<Box<dyn Expression>> {
     match self.current_token.literal.parse::<i64>() {
       Ok(value) => Some(Box::new(IntegerLiteral {
         token: self.current_token.clone(),
         value,
       })),
       Err(_) => None,
+    }
+  }
+
+  pub fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
+    let token = self.current_token.clone();
+    let operator = self.current_token.literal.clone();
+
+    self.next_token();
+
+    if let Some(right) = self.parse_expression(Precedence::Prefix) {
+      Some(Box::new(PrefixExpression {
+        token,
+        operator,
+        right: Some(right),
+      }))
+    } else {
+      None
     }
   }
 
@@ -151,13 +167,19 @@ impl Parser {
     Some(Box::new(ExpressionStatement { token, expression }))
   }
 
+  fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
+    let msg = format!("no prefix parse function for {:?} found", token_type);
+    self.errors.push(msg);
+  }
+
   pub fn parse_expression(
-    &self,
+    &mut self,
     _precedence: Precedence,
   ) -> Option<Box<dyn Expression>> {
     let prefix = self.prefix_parse_fns.get(&self.current_token.token_type);
 
     if prefix.is_none() {
+      self.no_prefix_parse_fn_error(self.current_token.token_type.clone());
       return None;
     }
 
@@ -263,13 +285,12 @@ mod tests {
 
     p.parse_program().unwrap();
 
-    assert_eq!(p.errors.len(), 3);
-
-    dbg!(&p.errors);
+    assert_eq!(p.errors.len(), 4);
 
     let errors = vec![
       "expected next token to be Assign, got Int instead",
       "expected next token to be Ident, got Assign instead",
+      "no prefix parse function for Assign found",
       "expected next token to be Ident, got Int instead",
     ];
 
@@ -307,5 +328,24 @@ mod tests {
     let stmt = program.statements[0].as_ref();
     assert_eq!(stmt.token_literal(), "5");
     assert_eq!(stmt.string(), "5");
+  }
+
+  #[test]
+  fn test_parsing_prefix_expressions() {
+    let prefix_tests = vec![("!5;", "!", 5), ("-15;", "-", 15)];
+
+    for tt in prefix_tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      assert_eq!(program.statements.len(), 1);
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), tt.1);
+
+      assert_eq!(stmt.string(), format!("({}{})", tt.1, tt.2));
+    }
   }
 }
