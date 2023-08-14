@@ -63,7 +63,7 @@ impl Node for VarStatement {
     let mut out = String::new();
 
     out.push_str(&self.token_literal());
-    out.push_str(" ");
+    out.push(' ');
     out.push_str(&self.name.value);
     out.push_str(" = ");
 
@@ -71,7 +71,7 @@ impl Node for VarStatement {
       out.push_str(&value.string());
     }
 
-    out.push_str(";");
+    out.push(';');
 
     out
   }
@@ -113,13 +113,13 @@ impl Node for RetStatement {
     let mut out = String::new();
 
     out.push_str(&self.token_literal());
-    out.push_str(" ");
+    out.push(' ');
 
     if let Some(value) = &self.return_value {
       out.push_str(&value.string());
     }
 
-    out.push_str(";");
+    out.push(';');
 
     out
   }
