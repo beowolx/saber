@@ -195,6 +195,45 @@ impl Node for PrefixExpression {
   }
 }
 
+pub struct InfixExpression {
+  pub token: Token,
+  pub left: Option<Box<dyn Expression>>,
+  pub operator: String,
+  pub right: Option<Box<dyn Expression>>,
+}
+
+impl Expression for InfixExpression {
+  fn expression_node(&self) {}
+}
+
+impl Node for InfixExpression {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    out.push('(');
+
+    if let Some(left) = &self.left {
+      out.push_str(&left.string());
+    }
+
+    out.push(' ');
+    out.push_str(&self.operator);
+    out.push(' ');
+
+    if let Some(right) = &self.right {
+      out.push_str(&right.string());
+    }
+
+    out.push(')');
+
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
