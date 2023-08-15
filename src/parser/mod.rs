@@ -255,9 +255,8 @@ impl Parser {
   }
 
   pub fn peek_precedence(&self) -> Precedence {
-    // Suspicious
     for (token_type, precedence) in PRECEDENCES.into_iter() {
-      if self.peek_token.token_type == token_type {
+      if self.peek_token_is(token_type) {
         return precedence;
       }
     }
@@ -449,6 +448,44 @@ mod tests {
       let stmt = program.statements[0].as_ref();
 
       assert_eq!(stmt.string(), format!("({} {} {})", tt.1, tt.2, tt.3));
+    }
+  }
+
+  #[test]
+  fn test_operator_precedence_parsing() {
+    let tests = vec![
+      ("-a * b", "((-a) * b)"),
+      ("!-a", "(!(-a))"),
+      ("a + b + c", "((a + b) + c)"),
+      ("a + b - c", "((a + b) - c)"),
+      ("a * b * c", "((a * b) * c)"),
+      ("a * b / c", "((a * b) / c)"),
+      ("a + b / c", "(a + (b / c))"),
+      ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+      ("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+      ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+      ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
+      (
+        "3 + 4 * 5 == 3 * 1 + 4 * 5",
+        "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+      ),
+    ];
+
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      if program.statements.len() > 1 {
+        let combined_statements = format!(
+          "{}{}",
+          program.statements[0].string(),
+          program.statements[1].string()
+        );
+        assert_eq!(combined_statements, tt.1);
+      } else {
+        assert_eq!(program.statements[0].string(), tt.1);
+      }
     }
   }
 }
