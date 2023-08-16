@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
   ast::{
     Expression, ExpressionStatement, Identifier, InfixExpression,
@@ -10,12 +8,13 @@ use crate::{
   token::Token,
   token::TokenType,
 };
+use std::collections::HashMap;
 
 type PrefixParseFn = fn(&mut Parser) -> Option<Box<dyn Expression>>;
 type InfixParseFn =
   fn(&mut Parser, Box<dyn Expression>) -> Option<Box<dyn Expression>>;
 
-#[derive(Debug, Eq, PartialEq, PartialOrd)]
+#[derive(Eq, PartialEq, PartialOrd)]
 enum Precedence {
   Lowest,
   Equals,
@@ -47,7 +46,7 @@ const PRECEDENCES: [(TokenType, Precedence); 8] = [
 ];
 
 impl Parser {
-  pub fn new(mut l: Lexer) -> Self {
+  fn new(mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
     let mut prefix_parse_fns: HashMap<TokenType, PrefixParseFn> =
@@ -77,12 +76,12 @@ impl Parser {
     }
   }
 
-  pub fn next_token(&mut self) {
+  fn next_token(&mut self) {
     self.current_token = self.peek_token.clone();
     self.peek_token = self.lexer.next_token();
   }
 
-  pub fn parse_program(&mut self) -> Option<Program> {
+  fn parse_program(&mut self) -> Option<Program> {
     let mut program = Program::new();
     while !self.current_token_is(TokenType::Eof) {
       if let Some(stmt) = self.parse_statement() {
@@ -93,7 +92,7 @@ impl Parser {
     Some(program)
   }
 
-  pub fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
     match self.current_token.token_type {
       TokenType::Var => self.parse_var_statement(),
       TokenType::Ret => self.parse_ret_statement(),
@@ -101,14 +100,14 @@ impl Parser {
     }
   }
 
-  pub fn parse_identifier(&mut self) -> Option<Box<dyn Expression>> {
+  fn parse_identifier(&mut self) -> Option<Box<dyn Expression>> {
     Some(Box::new(Identifier {
       token: self.current_token.clone(),
       value: self.current_token.literal.clone(),
     }))
   }
 
-  pub fn parse_integer_literal(&mut self) -> Option<Box<dyn Expression>> {
+  fn parse_integer_literal(&mut self) -> Option<Box<dyn Expression>> {
     match self.current_token.literal.parse::<i64>() {
       Ok(value) => Some(Box::new(IntegerLiteral {
         token: self.current_token.clone(),
@@ -118,7 +117,7 @@ impl Parser {
     }
   }
 
-  pub fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
+  fn parse_prefix_expression(&mut self) -> Option<Box<dyn Expression>> {
     let token = self.current_token.clone();
     let operator = self.current_token.literal.clone();
 
@@ -135,7 +134,7 @@ impl Parser {
     }
   }
 
-  pub fn parse_infix_expression(
+  fn parse_infix_expression(
     &mut self,
     left: Box<dyn Expression>,
   ) -> Option<Box<dyn Expression>> {
@@ -153,7 +152,7 @@ impl Parser {
     }))
   }
 
-  pub fn parse_var_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_var_statement(&mut self) -> Option<Box<dyn Statement>> {
     let token = self.current_token.clone();
 
     if !self.expect_peek(TokenType::Ident) {
@@ -181,7 +180,7 @@ impl Parser {
     }))
   }
 
-  pub fn parse_ret_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_ret_statement(&mut self) -> Option<Box<dyn Statement>> {
     let token = self.current_token.clone();
 
     self.next_token();
@@ -197,7 +196,7 @@ impl Parser {
     }))
   }
 
-  pub fn parse_expression_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_expression_statement(&mut self) -> Option<Box<dyn Statement>> {
     let token = self.current_token.clone();
     let expression = self.parse_expression(Precedence::Lowest);
 
@@ -213,7 +212,7 @@ impl Parser {
     self.errors.push(msg);
   }
 
-  pub fn parse_expression(
+  fn parse_expression(
     &mut self,
     precedence: Precedence,
   ) -> Option<Box<dyn Expression>> {
@@ -231,7 +230,6 @@ impl Parser {
     {
       let token_type = self.peek_token.token_type.clone();
 
-      // Extract the infix function here
       let infix_fn_option = self.infix_parse_fns.get(&token_type).cloned();
 
       self.next_token();
@@ -246,15 +244,15 @@ impl Parser {
     Some(left_exp)
   }
 
-  pub fn current_token_is(&self, token_type: TokenType) -> bool {
+  fn current_token_is(&self, token_type: TokenType) -> bool {
     self.current_token.token_type == token_type
   }
 
-  pub fn peek_token_is(&self, token_type: TokenType) -> bool {
+  fn peek_token_is(&self, token_type: TokenType) -> bool {
     self.peek_token.token_type == token_type
   }
 
-  pub fn peek_precedence(&self) -> Precedence {
+  fn peek_precedence(&self) -> Precedence {
     for (token_type, precedence) in PRECEDENCES.into_iter() {
       if self.peek_token_is(token_type) {
         return precedence;
@@ -263,7 +261,7 @@ impl Parser {
     Precedence::Lowest
   }
 
-  pub fn current_precedence(&self) -> Precedence {
+  fn current_precedence(&self) -> Precedence {
     for (token_type, precedence) in PRECEDENCES.into_iter() {
       if self.current_token_is(token_type) {
         return precedence;
@@ -272,7 +270,7 @@ impl Parser {
     Precedence::Lowest
   }
 
-  pub fn expect_peek(&mut self, token_type: TokenType) -> bool {
+  fn expect_peek(&mut self, token_type: TokenType) -> bool {
     if self.peek_token_is(token_type.clone()) {
       self.next_token();
       true
@@ -282,11 +280,11 @@ impl Parser {
     }
   }
 
-  pub fn errors(&self) -> Vec<String> {
+  fn errors(&self) -> Vec<String> {
     self.errors.clone()
   }
 
-  pub fn peek_error(&mut self, token_type: TokenType) {
+  fn peek_error(&mut self, token_type: TokenType) {
     let msg = format!(
       "expected next token to be {:?}, got {:?} instead",
       token_type, self.peek_token.token_type
@@ -298,7 +296,7 @@ impl Parser {
     self.prefix_parse_fns.insert(token_type, func);
   }
 
-  pub fn register_infix(&mut self, token_type: TokenType, func: InfixParseFn) {
+  fn register_infix(&mut self, token_type: TokenType, func: InfixParseFn) {
     self.infix_parse_fns.insert(token_type, func);
   }
 }
