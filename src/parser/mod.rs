@@ -55,6 +55,8 @@ impl Parser {
     prefix_parse_fns.insert(TokenType::Int, Self::parse_integer_literal);
     prefix_parse_fns.insert(TokenType::Bang, Self::parse_prefix_expression);
     prefix_parse_fns.insert(TokenType::Minus, Self::parse_prefix_expression);
+    prefix_parse_fns.insert(TokenType::True, Self::parse_boolean);
+    prefix_parse_fns.insert(TokenType::False, Self::parse_boolean);
 
     let mut infix_parse_fns: HashMap<TokenType, InfixParseFn> = HashMap::new();
     infix_parse_fns.insert(TokenType::Plus, Self::parse_infix_expression);
@@ -205,6 +207,13 @@ impl Parser {
     }
 
     Some(Box::new(ExpressionStatement { token, expression }))
+  }
+
+  fn parse_boolean(&mut self) -> Option<Box<dyn Expression>> {
+    Some(Box::new(Identifier {
+      token: self.current_token.clone(),
+      value: self.current_token_is(TokenType::True).to_string(),
+    }))
   }
 
   fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
@@ -424,6 +433,25 @@ mod tests {
   }
 
   #[test]
+  fn test_parsing_prefix_booleans_expressions() {
+    let prefix_tests = vec![("!true;", "!", true), ("!false;", "!", false)];
+
+    for tt in prefix_tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      assert_eq!(program.statements.len(), 1);
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), tt.1);
+
+      assert_eq!(stmt.string(), format!("({}{})", tt.1, tt.2));
+    }
+  }
+
+  #[test]
   fn test_parsing_infix_expressions() {
     let infix_tests = vec![
       ("5 + 5;", 5, "+", 5),
@@ -434,6 +462,27 @@ mod tests {
       ("5 < 5;", 5, "<", 5),
       ("5 == 5;", 5, "==", 5),
       ("5 != 5;", 5, "!=", 5),
+    ];
+
+    for tt in infix_tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      assert_eq!(program.statements.len(), 1);
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.string(), format!("({} {} {})", tt.1, tt.2, tt.3));
+    }
+  }
+
+  #[test]
+  fn test_parsing_infix_booleans_expressions() {
+    let infix_tests = vec![
+      ("true == true", true, "==", true),
+      ("true != false", true, "!=", false),
+      ("false == false", false, "==", false),
     ];
 
     for tt in infix_tests {
@@ -467,6 +516,10 @@ mod tests {
         "3 + 4 * 5 == 3 * 1 + 4 * 5",
         "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
       ),
+      ("true", "true"),
+      ("false", "false"),
+      ("3 > 5 == false", "((3 > 5) == false)"),
+      ("3 < 5 == true", "((3 < 5) == true)"),
     ];
 
     for tt in tests {
@@ -484,6 +537,23 @@ mod tests {
       } else {
         assert_eq!(program.statements[0].string(), tt.1);
       }
+    }
+  }
+
+  #[test]
+  fn test_boolean_expression() {
+    let tests = vec![("true;", true), ("false;", false)];
+
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      assert_eq!(program.statements.len(), 1);
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), tt.1.to_string());
     }
   }
 }
