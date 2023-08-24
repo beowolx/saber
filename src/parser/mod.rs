@@ -1,8 +1,8 @@
 use crate::{
   ast::{
-    Expression, ExpressionStatement, Identifier, InfixExpression,
-    IntegerLiteral, PrefixExpression, Program, RetStatement, Statement,
-    VarStatement,
+    BlockStatement, Expression, ExpressionStatement, Identifier, IfExpression,
+    InfixExpression, IntegerLiteral, PrefixExpression, Program, RetStatement,
+    Statement, VarStatement,
   },
   lexer::Lexer,
   token::Token,
@@ -58,6 +58,7 @@ impl Parser {
     prefix_parse_fns.insert(TokenType::True, Self::parse_boolean);
     prefix_parse_fns.insert(TokenType::False, Self::parse_boolean);
     prefix_parse_fns.insert(TokenType::Lparen, Self::parse_grouped_expression);
+    prefix_parse_fns.insert(TokenType::If, Self::parse_if_expression);
 
     let mut infix_parse_fns: HashMap<TokenType, InfixParseFn> = HashMap::new();
     infix_parse_fns.insert(TokenType::Plus, Self::parse_infix_expression);
@@ -227,6 +228,67 @@ impl Parser {
     }
 
     exp
+  }
+
+  fn parse_if_expression(&mut self) -> Option<Box<dyn Expression>> {
+    let token = self.current_token.clone();
+
+    if !self.expect_peek(TokenType::Lparen) {
+      return None;
+    }
+
+    self.next_token();
+
+    let condition = self.parse_expression(Precedence::Lowest);
+
+    if !self.expect_peek(TokenType::Rparen) {
+      return None;
+    }
+
+    if !self.expect_peek(TokenType::Lbrace) {
+      return None;
+    }
+
+    let consequence = self.parse_block_statement();
+
+    let alternative = if self.peek_token_is(TokenType::Else) {
+      self.next_token();
+
+      if !self.expect_peek(TokenType::Lbrace) {
+        return None;
+      }
+
+      self.parse_block_statement()
+    } else {
+      None
+    };
+
+    Some(Box::new(IfExpression {
+      token,
+      condition,
+      consequence,
+      alternative,
+    }))
+  }
+
+  fn parse_block_statement(&mut self) -> Option<BlockStatement> {
+    let mut block = BlockStatement {
+      token: self.current_token.clone(),
+      statements: vec![],
+    };
+
+    self.next_token();
+
+    while !self.current_token_is(TokenType::Rbrace)
+      && !self.current_token_is(TokenType::Eof)
+    {
+      if let Some(stmt) = self.parse_statement() {
+        block.statements.push(stmt);
+      }
+      self.next_token();
+    }
+
+    Some(block)
   }
 
   fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
@@ -573,5 +635,21 @@ mod tests {
 
       assert_eq!(stmt.token_literal(), tt.1.to_string());
     }
+  }
+
+  #[test]
+  fn test_if_expression() {
+    let input = "if (x < y) { x }";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+
+    assert_eq!(stmt.token_literal(), "if");
+    assert_eq!(stmt.string(), "if (x < y) x");
   }
 }
