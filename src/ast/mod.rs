@@ -251,6 +251,72 @@ impl Node for Boolean {
   }
 }
 
+pub struct BlockStatement {
+  pub token: Token,
+  pub statements: Vec<Box<dyn Statement>>,
+}
+
+impl Statement for BlockStatement {
+  fn statement_node(&self) {}
+}
+
+impl Node for BlockStatement {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    for s in &self.statements {
+      out.push_str(&s.string());
+    }
+
+    out
+  }
+}
+
+pub struct IfExpression {
+  pub token: Token,
+  pub condition: Option<Box<dyn Expression>>,
+  pub consequence: Option<BlockStatement>,
+  pub alternative: Option<BlockStatement>,
+}
+
+impl Expression for IfExpression {
+  fn expression_node(&self) {}
+}
+
+impl Node for IfExpression {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    out.push_str("if");
+    out.push(' ');
+
+    if let Some(condition) = &self.condition {
+      out.push_str(&condition.string());
+    }
+
+    out.push(' ');
+
+    if let Some(consequence) = &self.consequence {
+      out.push_str(&consequence.string());
+    }
+
+    if let Some(alternative) = &self.alternative {
+      out.push_str("else ");
+      out.push_str(&alternative.string());
+    }
+
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
