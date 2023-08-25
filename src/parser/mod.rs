@@ -257,7 +257,6 @@ impl Parser {
       if !self.expect_peek(TokenType::Lbrace) {
         return None;
       }
-
       self.parse_block_statement()
     } else {
       None
@@ -445,7 +444,7 @@ mod tests {
 
     assert_eq!(p.errors.len(), 4);
 
-    let errors = vec![
+    let errors = [
       "expected next token to be Assign, got Int instead",
       "expected next token to be Ident, got Assign instead",
       "no prefix parse function for Assign found",
@@ -651,5 +650,21 @@ mod tests {
 
     assert_eq!(stmt.token_literal(), "if");
     assert_eq!(stmt.string(), "if (x < y) x");
+  }
+
+  #[test]
+  fn test_if_else_expression() {
+    let input = "if (x < y) { x } else { y }";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+
+    assert_eq!(stmt.token_literal(), "if");
+    assert_eq!(stmt.string(), "if (x < y) xelse y");
   }
 }
