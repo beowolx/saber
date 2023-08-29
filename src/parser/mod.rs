@@ -1,14 +1,14 @@
 use crate::{
   ast::{
-    BlockStatement, Expression, ExpressionStatement, Identifier, IfExpression,
-    InfixExpression, IntegerLiteral, PrefixExpression, Program, RetStatement,
-    Statement, VarStatement,
+    BlockStatement, Expression, ExpressionStatement, FunctionLiteral,
+    Identifier, IfExpression, InfixExpression, IntegerLiteral,
+    PrefixExpression, Program, RetStatement, Statement, VarStatement,
   },
   lexer::Lexer,
   token::Token,
   token::TokenType,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 type PrefixParseFn = fn(&mut Parser) -> Option<Box<dyn Expression>>;
 type InfixParseFn =
@@ -59,6 +59,7 @@ impl Parser {
     prefix_parse_fns.insert(TokenType::False, Self::parse_boolean);
     prefix_parse_fns.insert(TokenType::Lparen, Self::parse_grouped_expression);
     prefix_parse_fns.insert(TokenType::If, Self::parse_if_expression);
+    prefix_parse_fns.insert(TokenType::Function, Self::parse_function_literal);
 
     let mut infix_parse_fns: HashMap<TokenType, InfixParseFn> = HashMap::new();
     infix_parse_fns.insert(TokenType::Plus, Self::parse_infix_expression);
@@ -268,6 +269,64 @@ impl Parser {
       consequence,
       alternative,
     }))
+  }
+
+  fn parse_function_literal(&mut self) -> Option<Box<dyn Expression>> {
+    let token = self.current_token.clone();
+
+    if !self.expect_peek(TokenType::Lparen) {
+      return None;
+    }
+
+    let parameters = self.parse_function_parameters();
+
+    if !self.expect_peek(TokenType::Lbrace) {
+      return None;
+    }
+
+    let body = self.parse_block_statement();
+
+    Some(Box::new(FunctionLiteral {
+      token,
+      parameters,
+      body,
+    }))
+  }
+
+  fn parse_function_parameters(&mut self) -> Vec<Identifier> {
+    let mut identifiers = vec![];
+
+    if self.peek_token_is(TokenType::Rparen) {
+      self.next_token();
+      return identifiers;
+    }
+
+    self.next_token();
+
+    let ident = Identifier {
+      token: self.current_token.clone(),
+      value: self.current_token.literal.clone(),
+    };
+
+    identifiers.push(ident);
+
+    while self.peek_token_is(TokenType::Comma) {
+      self.next_token();
+      self.next_token();
+
+      let ident = Identifier {
+        token: self.current_token.clone(),
+        value: self.current_token.literal.clone(),
+      };
+
+      identifiers.push(ident);
+    }
+
+    if !self.expect_peek(TokenType::Rparen) {
+      return vec![];
+    }
+
+    identifiers
   }
 
   fn parse_block_statement(&mut self) -> Option<BlockStatement> {
@@ -666,5 +725,45 @@ mod tests {
 
     assert_eq!(stmt.token_literal(), "if");
     assert_eq!(stmt.string(), "if (x < y) xelse y");
+  }
+
+  #[test]
+  fn test_function_literal_parsing() {
+    let input = "def(x, y) { x + y; }";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+
+    assert_eq!(stmt.token_literal(), "def");
+    assert_eq!(stmt.string(), "def(x, y)(x + y)");
+  }
+
+  #[test]
+  fn test_function_parameter_parsing() {
+    let tests = vec![
+      ("def() {};", vec![]),
+      ("def(x) {};", vec!["x"]),
+      ("def(x, y, z) {};", vec!["x", "y", "z"]),
+    ];
+
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), "def");
+      if tt.1.is_empty() {
+        assert_eq!(stmt.string(), "def()");
+      } else {
+        assert_eq!(stmt.string(), format!("def({})", tt.1.join(", ")));
+      }
+    }
   }
 }
