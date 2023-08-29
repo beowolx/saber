@@ -317,6 +317,40 @@ impl Node for IfExpression {
   }
 }
 
+pub struct FunctionLiteral {
+  pub token: Token,
+  pub parameters: Vec<Identifier>,
+  pub body: Option<BlockStatement>,
+}
+
+impl Expression for FunctionLiteral {
+  fn expression_node(&self) {}
+}
+
+impl Node for FunctionLiteral {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    let params: Vec<String> =
+      self.parameters.iter().map(|p| p.string()).collect();
+
+    out.push_str(&self.token_literal());
+    out.push('(');
+    out.push_str(&params.join(", "));
+    out.push(')');
+
+    if let Some(body) = &self.body {
+      out.push_str(&body.string());
+    }
+
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
