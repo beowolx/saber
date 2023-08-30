@@ -351,6 +351,40 @@ impl Node for FunctionLiteral {
   }
 }
 
+pub struct CallExpression {
+  pub token: Token,
+  pub function: Option<Box<dyn Expression>>,
+  pub arguments: Vec<Box<dyn Expression>>,
+}
+
+impl Expression for CallExpression {
+  fn expression_node(&self) {}
+}
+
+impl Node for CallExpression {
+  fn token_literal(&self) -> String {
+    self.token.literal.clone()
+  }
+
+  fn string(&self) -> String {
+    let mut out = String::new();
+
+    if let Some(function) = &self.function {
+      out.push_str(&function.string());
+    }
+
+    out.push('(');
+
+    let args: Vec<String> = self.arguments.iter().map(|a| a.string()).collect();
+
+    out.push_str(&args.join(", "));
+
+    out.push(')');
+
+    out
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
