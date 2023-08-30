@@ -1,7 +1,7 @@
 use crate::{
   ast::{
-    BlockStatement, Expression, ExpressionStatement, FunctionLiteral,
-    Identifier, IfExpression, InfixExpression, IntegerLiteral,
+    BlockStatement, CallExpression, Expression, ExpressionStatement,
+    FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral,
     PrefixExpression, Program, RetStatement, Statement, VarStatement,
   },
   lexer::Lexer,
@@ -34,7 +34,7 @@ struct Parser {
   infix_parse_fns: HashMap<TokenType, InfixParseFn>,
 }
 
-const PRECEDENCES: [(TokenType, Precedence); 8] = [
+const PRECEDENCES: [(TokenType, Precedence); 9] = [
   (TokenType::Eq, Precedence::Equals),
   (TokenType::NotEq, Precedence::Equals),
   (TokenType::Lt, Precedence::LessGreater),
@@ -43,6 +43,7 @@ const PRECEDENCES: [(TokenType, Precedence); 8] = [
   (TokenType::Minus, Precedence::Sum),
   (TokenType::Slash, Precedence::Product),
   (TokenType::Asterisk, Precedence::Product),
+  (TokenType::Lparen, Precedence::Call),
 ];
 
 impl Parser {
@@ -70,6 +71,7 @@ impl Parser {
     infix_parse_fns.insert(TokenType::NotEq, Self::parse_infix_expression);
     infix_parse_fns.insert(TokenType::Lt, Self::parse_infix_expression);
     infix_parse_fns.insert(TokenType::Gt, Self::parse_infix_expression);
+    infix_parse_fns.insert(TokenType::Lparen, Self::parse_call_expression);
 
     Self {
       lexer: l,
@@ -347,6 +349,46 @@ impl Parser {
     }
 
     Some(block)
+  }
+
+  fn parse_call_expression(
+    &mut self,
+    function: Box<dyn Expression>,
+  ) -> Option<Box<dyn Expression>> {
+    let token = self.current_token.clone();
+    let arguments = self.parse_call_arguments();
+
+    Some(Box::new(CallExpression {
+      token,
+      function: Some(function),
+      arguments,
+    }))
+  }
+
+  fn parse_call_arguments(&mut self) -> Vec<Box<dyn Expression>> {
+    let mut args = vec![];
+
+    if self.peek_token_is(TokenType::Rparen) {
+      self.next_token();
+      return args;
+    }
+
+    self.next_token();
+
+    args.push(self.parse_expression(Precedence::Lowest).unwrap());
+
+    while self.peek_token_is(TokenType::Comma) {
+      self.next_token();
+      self.next_token();
+
+      args.push(self.parse_expression(Precedence::Lowest).unwrap());
+    }
+
+    if !self.expect_peek(TokenType::Rparen) {
+      return vec![];
+    }
+
+    args
   }
 
   fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
@@ -658,6 +700,15 @@ mod tests {
       ("2 / (5 + 5)", "(2 / (5 + 5))"),
       ("-(5 + 5)", "(-(5 + 5))"),
       ("!(true == true)", "(!(true == true))"),
+      ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+      (
+        "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+        "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+      ),
+      (
+        "add(a + b + c * d / f + g)",
+        "add((((a + b) + ((c * d) / f)) + g))",
+      ),
     ];
 
     for tt in tests {
@@ -763,6 +814,46 @@ mod tests {
         assert_eq!(stmt.string(), "def()");
       } else {
         assert_eq!(stmt.string(), format!("def({})", tt.1.join(", ")));
+      }
+    }
+  }
+
+  #[test]
+  fn test_call_expression_parsing() {
+    let input = "add(1, 2 * 3, 4 + 5);";
+
+    let l = Lexer::new(input.to_string());
+    let mut p = Parser::new(l);
+    let program = p.parse_program().unwrap();
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = program.statements[0].as_ref();
+
+    assert_eq!(stmt.token_literal(), "add");
+    assert_eq!(stmt.string(), "add(1, (2 * 3), (4 + 5))");
+  }
+
+  #[test]
+  fn test_call_expression_paremetes_parsing() {
+    let tests = vec![
+      ("add();", vec![]),
+      ("add(1);", vec!["1"]),
+      ("add(1, 2 * 3, 4 + 5);", vec!["1", "(2 * 3)", "(4 + 5)"]),
+    ];
+
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+      let program = p.parse_program().unwrap();
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), "add");
+      if tt.1.is_empty() {
+        assert_eq!(stmt.string(), "add()");
+      } else {
+        assert_eq!(stmt.string(), format!("add({})", tt.1.join(", ")));
       }
     }
   }
