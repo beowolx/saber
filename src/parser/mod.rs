@@ -175,15 +175,12 @@ impl Parser {
       return None;
     }
 
-    // TODO: Skip the expression until we find a semicolon
-    while !self.current_token_is(TokenType::Semicolon) {
-      self.next_token();
-    }
+    self.next_token();
 
     Some(Box::new(VarStatement {
       token,
       name,
-      value: None,
+      value: self.parse_expression(Precedence::Lowest),
     }))
   }
 
@@ -192,14 +189,18 @@ impl Parser {
 
     self.next_token();
 
-    // TODO: Skip the expression until we find a semicolon
-    while !self.current_token_is(TokenType::Semicolon) {
+    // // TODO: Skip the expression until we find a semicolon
+    // while !self.current_token_is(TokenType::Semicolon) {
+    //   self.next_token();
+    // }
+
+    if self.current_token_is(TokenType::Semicolon) {
       self.next_token();
     }
 
     Some(Box::new(RetStatement {
       token,
-      return_value: None,
+      return_value: self.parse_expression(Precedence::Lowest),
     }))
   }
 
@@ -491,42 +492,58 @@ mod tests {
   use crate::lexer::Lexer;
 
   #[test]
-  fn test_let_statements() {
-    let input = "
-        var x = 5;
-        var y = 10;
-        var foobar = 838383;
-        ";
+  fn test_var_statement_integers() {
+    let tests = vec![
+      ("var x = 5;", "x", 5),
+      ("var y = 10;", "y", 10),
+      ("var foobar = 838383;", "foobar", 838383),
+    ];
 
-    let l = Lexer::new(input.to_string());
-    let mut p = Parser::new(l);
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
 
-    let program = p.parse_program().unwrap();
+      let program = p.parse_program().unwrap();
 
-    assert_eq!(program.statements.len(), 3);
+      let stmt = program.statements[0].as_ref();
 
-    for stmt in program.statements {
       assert_eq!(stmt.token_literal(), "var");
+      assert_eq!(stmt.string(), format!("var {} = {};", tt.1, tt.2));
+    }
+  }
+
+  #[test]
+  fn test_var_statement_boolean() {
+    let tests =
+      vec![("var x = true;", "x", true), ("var y = false;", "y", false)];
+
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
+
+      let program = p.parse_program().unwrap();
+
+      let stmt = program.statements[0].as_ref();
+
+      assert_eq!(stmt.token_literal(), "var");
+      assert_eq!(stmt.string(), format!("var {} = {};", tt.1, tt.2));
     }
   }
 
   #[test]
   fn test_ret_statements() {
-    let input = "
-        ret 5;
-        ret 10;
-        ret 993322;
-        ";
+    let tests = vec![("ret 5;", 5), ("ret 10;", 10), ("ret 993322;", 993322)];
 
-    let l = Lexer::new(input.to_string());
-    let mut p = Parser::new(l);
+    for tt in tests {
+      let l = Lexer::new(tt.0.to_string());
+      let mut p = Parser::new(l);
 
-    let program = p.parse_program().unwrap();
+      let program = p.parse_program().unwrap();
 
-    assert_eq!(program.statements.len(), 3);
+      let stmt = program.statements[0].as_ref();
 
-    for stmt in program.statements {
       assert_eq!(stmt.token_literal(), "ret");
+      assert_eq!(stmt.string(), format!("ret {};", tt.1));
     }
   }
 
