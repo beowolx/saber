@@ -25,11 +25,11 @@ enum Precedence {
   Call,
 }
 
-struct Parser {
+pub struct Parser {
   lexer: Lexer,
   current_token: Token,
   peek_token: Token,
-  errors: Vec<String>,
+  pub errors: Vec<String>,
   prefix_parse_fns: HashMap<TokenType, PrefixParseFn>,
   infix_parse_fns: HashMap<TokenType, InfixParseFn>,
 }
@@ -47,7 +47,7 @@ const PRECEDENCES: [(TokenType, Precedence); 9] = [
 ];
 
 impl Parser {
-  fn new(mut l: Lexer) -> Self {
+  pub fn new(mut l: Lexer) -> Self {
     let current_token = l.next_token();
     let peek_token = l.next_token();
     let mut prefix_parse_fns: HashMap<TokenType, PrefixParseFn> =
@@ -88,7 +88,7 @@ impl Parser {
     self.peek_token = self.lexer.next_token();
   }
 
-  fn parse_program(&mut self) -> Option<Program> {
+  pub fn parse_program(&mut self) -> Option<Program> {
     let mut program = Program::new();
     while !self.current_token_is(TokenType::Eof) {
       if let Some(stmt) = self.parse_statement() {
