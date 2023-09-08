@@ -1,8 +1,8 @@
 use crate::{
   ast::{
     BlockStatement, CallExpression, Expression, ExpressionStatement,
-    FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral,
-    PrefixExpression, Program, RetStatement, Statement, VarStatement,
+    ForgeStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression,
+    IntegerLiteral, PrefixExpression, Program, RetStatement, Statement,
   },
   lexer::Lexer,
   token::Token,
@@ -101,7 +101,7 @@ impl Parser {
 
   fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
     match self.current_token.token_type {
-      TokenType::Var => self.parse_var_statement(),
+      TokenType::Forge => self.parse_forge_statement(),
       TokenType::Ret => self.parse_ret_statement(),
       _ => self.parse_expression_statement(),
     }
@@ -159,7 +159,7 @@ impl Parser {
     }))
   }
 
-  fn parse_var_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_forge_statement(&mut self) -> Option<Box<dyn Statement>> {
     let token = self.current_token.clone();
 
     if !self.expect_peek(TokenType::Ident) {
@@ -177,7 +177,7 @@ impl Parser {
 
     self.next_token();
 
-    Some(Box::new(VarStatement {
+    Some(Box::new(ForgeStatement {
       token,
       name,
       value: self.parse_expression(Precedence::Lowest),
@@ -492,11 +492,11 @@ mod tests {
   use crate::lexer::Lexer;
 
   #[test]
-  fn test_var_statement_integers() {
+  fn test_forge_statement_integers() {
     let tests = vec![
-      ("var x = 5;", "x", 5),
-      ("var y = 10;", "y", 10),
-      ("var foobar = 838383;", "foobar", 838383),
+      ("forge x = 5;", "x", 5),
+      ("forge y = 10;", "y", 10),
+      ("forge foobar = 838383;", "foobar", 838383),
     ];
 
     for tt in tests {
@@ -507,15 +507,17 @@ mod tests {
 
       let stmt = program.statements[0].as_ref();
 
-      assert_eq!(stmt.token_literal(), "var");
-      assert_eq!(stmt.string(), format!("var {} = {};", tt.1, tt.2));
+      assert_eq!(stmt.token_literal(), "forge");
+      assert_eq!(stmt.string(), format!("forge {} = {};", tt.1, tt.2));
     }
   }
 
   #[test]
-  fn test_var_statement_boolean() {
-    let tests =
-      vec![("var x = true;", "x", true), ("var y = false;", "y", false)];
+  fn test_forge_statement_boolean() {
+    let tests = vec![
+      ("forge x = true;", "x", true),
+      ("forge y = false;", "y", false),
+    ];
 
     for tt in tests {
       let l = Lexer::new(tt.0.to_string());
@@ -525,8 +527,8 @@ mod tests {
 
       let stmt = program.statements[0].as_ref();
 
-      assert_eq!(stmt.token_literal(), "var");
-      assert_eq!(stmt.string(), format!("var {} = {};", tt.1, tt.2));
+      assert_eq!(stmt.token_literal(), "forge");
+      assert_eq!(stmt.string(), format!("forge {} = {};", tt.1, tt.2));
     }
   }
 
@@ -550,9 +552,9 @@ mod tests {
   #[test]
   fn test_parser_errors() {
     let input = "
-        var x 5;
-        var = 10;
-        var 838383;
+        forge x 5;
+        forge = 10;
+        forge 838383;
         ";
 
     let l = Lexer::new(input.to_string());
