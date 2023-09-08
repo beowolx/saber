@@ -11,7 +11,7 @@ fn main() {
   let user = env::var("USER").expect("Failed to get the current user");
 
   println!(
-    "💧 Hello {}! Welcome to the Mizu programming language!",
+    "💧 Hello {}! Welcome to the Saber programming language!",
     user
   );
   println!("Feel free to type in commands");
