@@ -1,5 +1,5 @@
 pub const DEF: &str = "def";
-pub const VAR: &str = "var";
+pub const FORGE: &str = "forge";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
 pub const IF: &str = "if";
@@ -45,7 +45,7 @@ pub enum TokenType {
   Lbrace,
   Rbrace,
   Function,
-  Var,
+  Forge,
   True,
   False,
   If,
@@ -59,7 +59,7 @@ impl TokenType {
   pub fn lookup_ident(ident: &str) -> Self {
     match ident {
       DEF => Self::Function,
-      VAR => Self::Var,
+      FORGE => Self::Forge,
       TRUE => Self::True,
       FALSE => Self::False,
       IF => Self::If,

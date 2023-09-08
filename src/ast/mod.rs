@@ -45,17 +45,17 @@ impl Node for Program {
   }
 }
 
-pub struct VarStatement {
+pub struct ForgeStatement {
   pub token: Token,
   pub name: Identifier,
   pub value: Option<Box<dyn Expression>>,
 }
 
-impl Statement for VarStatement {
+impl Statement for ForgeStatement {
   fn statement_node(&self) {}
 }
 
-impl Node for VarStatement {
+impl Node for ForgeStatement {
   fn token_literal(&self) -> String {
     self.token.literal.clone()
   }
@@ -393,28 +393,28 @@ mod tests {
   #[test]
   fn test_string_value() {
     let program = Program {
-      statements: vec![Box::new(VarStatement {
+      statements: vec![Box::new(ForgeStatement {
         token: Token {
-          token_type: TokenType::Var,
-          literal: String::from("var"),
+          token_type: TokenType::Forge,
+          literal: String::from("forge"),
         },
         name: Identifier {
           token: Token {
             token_type: TokenType::Ident,
-            literal: String::from("myVar"),
+            literal: String::from("myForge"),
           },
-          value: String::from("myVar"),
+          value: String::from("myForge"),
         },
         value: Some(Box::new(Identifier {
           token: Token {
             token_type: TokenType::Ident,
-            literal: String::from("anotherVar"),
+            literal: String::from("anotherForge"),
           },
-          value: String::from("anotherVar"),
+          value: String::from("anotherForge"),
         })),
       })],
     };
 
-    assert_eq!(program.string(), "var myVar = anotherVar;");
+    assert_eq!(program.string(), "forge myForge = anotherForge;");
   }
 }

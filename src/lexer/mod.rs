@@ -164,13 +164,13 @@ mod tests {
   #[test]
   fn test_lexer() {
     let input = "
-        var five_test = 5;
-        var ten = 10;
-        var add = def(x, y) {
+        forge five_test = 5;
+        forge ten = 10;
+        forge add = def(x, y) {
           x + y;
         };
 
-        var result = add(five, ten);
+        forge result = add(five, ten);
 
         !-/*5;
         5 < 10 > 5;
@@ -187,17 +187,17 @@ mod tests {
     .to_owned();
 
     let tests = vec![
-      TokenType::Var,
+      TokenType::Forge,
       TokenType::Ident,
       TokenType::Assign,
       TokenType::Int,
       TokenType::Semicolon,
-      TokenType::Var,
+      TokenType::Forge,
       TokenType::Ident,
       TokenType::Assign,
       TokenType::Int,
       TokenType::Semicolon,
-      TokenType::Var,
+      TokenType::Forge,
       TokenType::Ident,
       TokenType::Assign,
       TokenType::Function,
@@ -213,7 +213,7 @@ mod tests {
       TokenType::Semicolon,
       TokenType::Rbrace,
       TokenType::Semicolon,
-      TokenType::Var,
+      TokenType::Forge,
       TokenType::Ident,
       TokenType::Assign,
       TokenType::Ident,
