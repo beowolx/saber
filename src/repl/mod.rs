@@ -31,7 +31,7 @@ impl Repl {
   }
   fn print_parser_errors(errors: Vec<String>) {
     println!("Woops! 🌊 Something went wrong 🌊");
-    println!("エラーが発生しました！(An error occurred!)"); // Japanese Localization
+    println!("エラーが発生しました！(An error occurred!)");
     println!(" parser errors:");
 
     for msg in errors {
