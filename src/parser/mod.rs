@@ -799,7 +799,7 @@ mod tests {
 
   #[test]
   fn test_function_literal_parsing() {
-    let input = "def(x, y) { x + y; }";
+    let input = "weave(x, y) { x + y; }";
 
     let l = Lexer::new(input.to_string());
     let mut p = Parser::new(l);
@@ -809,16 +809,16 @@ mod tests {
 
     let stmt = program.statements[0].as_ref();
 
-    assert_eq!(stmt.token_literal(), "def");
-    assert_eq!(stmt.string(), "def(x, y)(x + y)");
+    assert_eq!(stmt.token_literal(), "weave");
+    assert_eq!(stmt.string(), "weave(x, y)(x + y)");
   }
 
   #[test]
   fn test_function_parameter_parsing() {
     let tests = vec![
-      ("def() {};", vec![]),
-      ("def(x) {};", vec!["x"]),
-      ("def(x, y, z) {};", vec!["x", "y", "z"]),
+      ("weave() {};", vec![]),
+      ("weave(x) {};", vec!["x"]),
+      ("weave(x, y, z) {};", vec!["x", "y", "z"]),
     ];
 
     for tt in tests {
@@ -828,11 +828,11 @@ mod tests {
 
       let stmt = program.statements[0].as_ref();
 
-      assert_eq!(stmt.token_literal(), "def");
+      assert_eq!(stmt.token_literal(), "weave");
       if tt.1.is_empty() {
-        assert_eq!(stmt.string(), "def()");
+        assert_eq!(stmt.string(), "weave()");
       } else {
-        assert_eq!(stmt.string(), format!("def({})", tt.1.join(", ")));
+        assert_eq!(stmt.string(), format!("weave({})", tt.1.join(", ")));
       }
     }
   }

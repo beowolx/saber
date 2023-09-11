@@ -166,7 +166,7 @@ mod tests {
     let input = "
         forge five_test = 5;
         forge ten = 10;
-        forge add = def(x, y) {
+        forge add = weave(x, y) {
           x + y;
         };
 
