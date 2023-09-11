@@ -1,4 +1,4 @@
-pub const DEF: &str = "def";
+pub const WEAVE: &str = "weave";
 pub const FORGE: &str = "forge";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
@@ -58,7 +58,7 @@ pub enum TokenType {
 impl TokenType {
   pub fn lookup_ident(ident: &str) -> Self {
     match ident {
-      DEF => Self::Function,
+      WEAVE => Self::Function,
       FORGE => Self::Forge,
       TRUE => Self::True,
       FALSE => Self::False,
