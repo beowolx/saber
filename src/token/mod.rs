@@ -4,7 +4,7 @@ pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
 pub const IF: &str = "if";
 pub const ELSE: &str = "else";
-pub const RET: &str = "ret";
+pub const IGNITE: &str = "ignite";
 
 pub const EQ: &str = "==";
 pub const NOT_EQ: &str = "!=";
@@ -50,7 +50,7 @@ pub enum TokenType {
   False,
   If,
   Else,
-  Ret,
+  Ignite,
   Eq,
   NotEq,
 }
@@ -64,7 +64,7 @@ impl TokenType {
       FALSE => Self::False,
       IF => Self::If,
       ELSE => Self::Else,
-      RET => Self::Ret,
+      IGNITE => Self::Ignite,
       _ => Self::Ident,
     }
   }
