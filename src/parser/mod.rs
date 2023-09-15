@@ -1,8 +1,8 @@
 use crate::{
   ast::{
     BlockStatement, CallExpression, Expression, ExpressionStatement,
-    ForgeStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression,
-    IntegerLiteral, PrefixExpression, Program, RetStatement, Statement,
+    ForgeStatement, FunctionLiteral, Identifier, IfExpression, IgniteStatement,
+    InfixExpression, IntegerLiteral, PrefixExpression, Program, Statement,
   },
   lexer::Lexer,
   token::Token,
@@ -102,7 +102,7 @@ impl Parser {
   fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
     match self.current_token.token_type {
       TokenType::Forge => self.parse_forge_statement(),
-      TokenType::Ret => self.parse_ret_statement(),
+      TokenType::Ignite => self.parse_ignite_statement(),
       _ => self.parse_expression_statement(),
     }
   }
@@ -184,21 +184,16 @@ impl Parser {
     }))
   }
 
-  fn parse_ret_statement(&mut self) -> Option<Box<dyn Statement>> {
+  fn parse_ignite_statement(&mut self) -> Option<Box<dyn Statement>> {
     let token = self.current_token.clone();
 
     self.next_token();
-
-    // // TODO: Skip the expression until we find a semicolon
-    // while !self.current_token_is(TokenType::Semicolon) {
-    //   self.next_token();
-    // }
 
     if self.current_token_is(TokenType::Semicolon) {
       self.next_token();
     }
 
-    Some(Box::new(RetStatement {
+    Some(Box::new(IgniteStatement {
       token,
       return_value: self.parse_expression(Precedence::Lowest),
     }))
@@ -533,8 +528,12 @@ mod tests {
   }
 
   #[test]
-  fn test_ret_statements() {
-    let tests = vec![("ret 5;", 5), ("ret 10;", 10), ("ret 993322;", 993322)];
+  fn test_ignite_statements() {
+    let tests = vec![
+      ("ignite 5;", 5),
+      ("ignite 10;", 10),
+      ("ignite 993322;", 993322),
+    ];
 
     for tt in tests {
       let l = Lexer::new(tt.0.to_string());
@@ -544,8 +543,8 @@ mod tests {
 
       let stmt = program.statements[0].as_ref();
 
-      assert_eq!(stmt.token_literal(), "ret");
-      assert_eq!(stmt.string(), format!("ret {};", tt.1));
+      assert_eq!(stmt.token_literal(), "ignite");
+      assert_eq!(stmt.string(), format!("ignite {};", tt.1));
     }
   }
 

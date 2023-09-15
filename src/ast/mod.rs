@@ -95,16 +95,16 @@ impl Node for Identifier {
   }
 }
 
-pub struct RetStatement {
+pub struct IgniteStatement {
   pub token: Token,
   pub return_value: Option<Box<dyn Expression>>,
 }
 
-impl Statement for RetStatement {
+impl Statement for IgniteStatement {
   fn statement_node(&self) {}
 }
 
-impl Node for RetStatement {
+impl Node for IgniteStatement {
   fn token_literal(&self) -> String {
     self.token.literal.clone()
   }

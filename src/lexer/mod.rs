@@ -176,9 +176,9 @@ mod tests {
         5 < 10 > 5;
 
         if (5 < 10) {
-          ret true;
+          ignite true;
         } else {
-          ret false;
+          ignite false;
         }
 
         10 == 10;
@@ -242,13 +242,13 @@ mod tests {
       TokenType::Int,
       TokenType::Rparen,
       TokenType::Lbrace,
-      TokenType::Ret,
+      TokenType::Ignite,
       TokenType::True,
       TokenType::Semicolon,
       TokenType::Rbrace,
       TokenType::Else,
       TokenType::Lbrace,
-      TokenType::Ret,
+      TokenType::Ignite,
       TokenType::False,
       TokenType::Semicolon,
       TokenType::Rbrace,
