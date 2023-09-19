@@ -20,3 +20,16 @@ impl Object for Integer {
     ObjectType::Integer
   }
 }
+
+struct Boolean {
+  value: bool,
+}
+
+impl Object for Boolean {
+  fn inspect(&self) -> String {
+    self.value.to_string()
+  }
+  fn object_type(&self) -> ObjectType {
+    ObjectType::Boolean
+  }
+}
