@@ -1,6 +1,7 @@
 enum ObjectType {
   Integer,
   Boolean,
+  DarkSide,
 }
 
 trait Object {
@@ -31,5 +32,16 @@ impl Object for Boolean {
   }
   fn object_type(&self) -> ObjectType {
     ObjectType::Boolean
+  }
+}
+
+struct DarkSide;
+
+impl Object for DarkSide {
+  fn inspect(&self) -> String {
+    "DarkSide".to_owned()
+  }
+  fn object_type(&self) -> ObjectType {
+    ObjectType::DarkSide
   }
 }
