@@ -1,4 +1,4 @@
-enum ObjectType {
+pub enum ObjectType {
   Integer,
   Boolean,
   DarkSide,
