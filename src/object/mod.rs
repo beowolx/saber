@@ -1,5 +1,6 @@
+#[derive(Debug)]
 pub enum ObjectType {
-  Integer,
+  Integer(i64),
   Boolean,
   DarkSide,
 }
@@ -18,7 +19,7 @@ impl Object for Integer {
     self.value.to_string()
   }
   fn object_type(&self) -> ObjectType {
-    ObjectType::Integer
+    ObjectType::Integer(self.value)
   }
 }
 
