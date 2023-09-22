@@ -1,3 +1,5 @@
+use crate::{ast::Node, object::ObjectType};
+
 #[cfg(test)]
 mod tests {
   use crate::{lexer::Lexer, object::ObjectType, parser::Parser};
@@ -6,13 +8,20 @@ mod tests {
     let l = Lexer::new(input.to_owned());
     let mut p = Parser::new(l);
     let program = p.parse_program().unwrap();
-    return program.eval();
+    program.eval()
   }
 
-  fn test_integer_object(obj: ObjectType, expected: i64) {
+  fn test_integer_object(obj: ObjectType, expected: i64) -> bool {
     match obj {
-      ObjectType::Integer(i) => assert_eq!(i, expected),
-      _ => panic!("object is not Integer. got={}", obj.inspect()),
+      ObjectType::Integer(value) => {
+        if value != expected {
+          panic!("object has wrong value. got={}, want={}", value, expected);
+        }
+        true
+      }
+      _ => {
+        panic!("object is not Integer. got={:?}", obj);
+      }
     }
   }
 
