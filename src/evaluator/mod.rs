@@ -1,5 +1,3 @@
-use crate::{ast::Node, object::ObjectType};
-
 #[cfg(test)]
 mod tests {
   use crate::{lexer::Lexer, object::ObjectType, parser::Parser};
