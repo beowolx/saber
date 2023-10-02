@@ -1,7 +1,5 @@
 use crate::token::Token;
 
-// Define a unified Node enum
-#[derive(Debug, Clone)]
 pub enum Node {
   Program(Program),
   Statement(Statement),
@@ -9,7 +7,7 @@ pub enum Node {
 }
 
 // Define Statement enum
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Statement {
   ForgeStatement(ForgeStatement),
   IgniteStatement(IgniteStatement),
@@ -18,7 +16,7 @@ pub enum Statement {
 }
 
 // Define Expression enum
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Expression {
   Identifier(Identifier),
   IntegerLiteral(IntegerLiteral),
@@ -30,43 +28,68 @@ pub enum Expression {
   CallExpression(CallExpression),
 }
 
-// The existing structs remain mostly the same
+#[derive(Debug)]
 pub struct Program {
   pub statements: Vec<Statement>,
 }
+use std::fmt;
 
+impl fmt::Display for Program {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let mut program_string = String::new();
+    for statement in &self.statements {
+      program_string.push_str(&format!("{:?}\n", statement));
+    }
+    write!(f, "{}", program_string)
+  }
+}
+
+impl Program {
+  pub fn new() -> Program {
+    Program {
+      statements: Vec::new(),
+    }
+  }
+}
+
+#[derive(Debug)]
 pub struct ForgeStatement {
   pub token: Token,
   pub name: Identifier,
   pub value: Option<Expression>,
 }
 
+#[derive(Debug)]
 pub struct Identifier {
   pub token: Token,
   pub value: String,
 }
-
+#[derive(Debug)]
 pub struct IgniteStatement {
   pub token: Token,
   pub return_value: Option<Box<Expression>>,
 }
 
+#[derive(Debug)]
 pub struct ExpressionStatement {
   pub token: Token,
   pub expression: Option<Box<Expression>>,
 }
 
+#[derive(Debug)]
 pub struct IntegerLiteral {
   pub token: Token,
   pub value: i64,
 }
 
+#[derive(Debug)]
 pub struct PrefixExpression {
   pub token: Token,
   pub operator: String,
   pub right: Option<Box<Expression>>,
 }
 
+#[derive(Debug)]
 pub struct InfixExpression {
   pub token: Token,
   pub left: Option<Box<Expression>>,
@@ -74,16 +97,19 @@ pub struct InfixExpression {
   pub right: Option<Box<Expression>>,
 }
 
+#[derive(Debug)]
 pub struct Boolean {
   pub token: Token,
   pub value: bool,
 }
 
+#[derive(Debug)]
 pub struct BlockStatement {
   pub token: Token,
   pub statements: Vec<Box<Statement>>,
 }
 
+#[derive(Debug)]
 pub struct IfExpression {
   pub token: Token,
   pub condition: Option<Box<Expression>>,
@@ -91,12 +117,14 @@ pub struct IfExpression {
   pub alternative: Option<BlockStatement>,
 }
 
+#[derive(Debug)]
 pub struct FunctionLiteral {
   pub token: Token,
   pub parameters: Vec<Identifier>,
   pub body: Option<BlockStatement>,
 }
 
+#[derive(Debug)]
 pub struct CallExpression {
   pub token: Token,
   pub function: Option<Box<Expression>>,
@@ -111,7 +139,7 @@ mod tests {
   #[test]
   fn test_string_value() {
     let program = Program {
-      statements: vec![Box::new(ForgeStatement {
+      statements: vec![Statement::ForgeStatement(ForgeStatement {
         token: Token {
           token_type: TokenType::Forge,
           literal: String::from("forge"),
@@ -123,7 +151,7 @@ mod tests {
           },
           value: String::from("myForge"),
         },
-        value: Some(Box::new(Identifier {
+        value: Some(Expression::Identifier(Identifier {
           token: Token {
             token_type: TokenType::Ident,
             literal: String::from("anotherForge"),
@@ -133,6 +161,6 @@ mod tests {
       })],
     };
 
-    assert_eq!(program.string(), "forge myForge = anotherForge;");
+    assert_eq!(program.to_string(), "forge myForge = anotherForge;");
   }
 }
